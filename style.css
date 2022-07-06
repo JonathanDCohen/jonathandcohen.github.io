@@ -6,3 +6,17 @@ html, body {
 canvas {
   display: block;
 }
+
+#saveButton {
+  position: absolute;
+  right: 50px;
+  top: 50px;
+  z-index: 9999;
+}
+
+#redrawButton {
+  position: absolute;
+  right: 50px;
+  top: 70px;
+  z-index: 9999;
+}

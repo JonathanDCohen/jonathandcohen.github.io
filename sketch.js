@@ -1,7 +1,7 @@
-const gridSizePixels = 20;
-const segmentSize = 6;
-const stepSize = gridSizePixels * segmentSize;
-const railThickness = gridSizePixels / 2; 
+let gridSizePixels = Math.random() * 60 + 15;
+let segmentSize = Math.random() * 5 + 1;
+let stepSize = gridSizePixels * segmentSize;
+let railThickness = gridSizePixels / 2; 
 
 /**
  * @readonly
@@ -41,12 +41,11 @@ class Rail {
     this.segments.push(direction);
   }
 
-
   draw() {
-    fill(this.h, this.s, this.b);
     let downCount = 0;
     for (let i = 0; i < this.segments.length; ++i) {
       push();
+      fill(this.h, this.s, this.b);
 
       translate(stepSize * i, stepSize * downCount + this.startY * gridSizePixels);
       if (this.segments[i] === Direction.DOWN) {
@@ -70,21 +69,44 @@ class Rail {
   }
 }
 
-let r = null;
+let rs = [];
+function reset() {
+  gridSizePixels = Math.random() * 60 + 15;
+  segmentSize = Math.random() * 5 + 1;
+  stepSize = gridSizePixels * segmentSize;
+  railThickness = gridSizePixels / 2;
+  background(random(0, 255), random(0, 255), random(0, 255));
+  rs = [];
+  const segments = [];
+  for (let segment = 0; segment < ceil(windowWidth / gridSizePixels / segmentSize); ++segment) {
+    segments.push(random() < .5 ? Direction.OVER : Direction.DOWN);
+  }
+  const numRails = random(5, 15);
+  const h = random(0,255);
+  const s = random(0,255);
+  const v = random(0,255);
+  for (let i = 0; i < numRails; ++i) {
+    let r = new Rail(h, s, v, i / numRails * windowHeight / gridSizePixels - 5);
+    for (segment of segments) {
+      r.addSegment(segment);
+    }
+    rs.push(r);
+  }
+}
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   colorMode(HSB);
   noStroke();
-  r = new Rail(random(0, 255), 255, 255, random(-5, 5));
-  
-  for (let segment = 0; segment < ceil(windowWidth / gridSizePixels / segmentSize); ++segment) {
-    r.addSegment(random() < .5 ? Direction.OVER : Direction.DOWN);
-  }
+  reset();
+}
+
+function doSave() {
+  save(`${Date.now()}.png`);
 }
 
 function draw() {
-  background(0);
-  
-  r.draw();
+  for (const rail of rs) {
+    rail.draw();
+  }
 }
