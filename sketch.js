@@ -85,8 +85,9 @@ function reset() {
   const h = random(0,255);
   const s = random(0,255);
   const v = random(0,255);
+  const bundleHeight = random(5, windowHeight / gridSizePixels);
   for (let i = 0; i < numRails; ++i) {
-    let r = new Rail(h, s, v, i / numRails * windowHeight / gridSizePixels - 5);
+    let r = new Rail(h, s, v, i / numRails * bundleHeight - 5);
     for (segment of segments) {
       r.addSegment(segment);
     }
