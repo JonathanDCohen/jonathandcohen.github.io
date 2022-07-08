@@ -119,8 +119,10 @@ class Rail {
  * its owner can coordinate multiple RailBundles to not intersect
  */
 class RailBundle {
-  constructor(startI, bundleHeight) {
+  constructor(startI, bundleHeight, speed) {
     const numRails = random(5, 15);
+    this.speed = speed;
+    this.startFrame = frameCount;
     this.rails = [];
     // The distance between the top and bottom rail, in grid units
     const h = random(0,255);
@@ -144,22 +146,22 @@ class RailBundle {
     }
   }
 
-  /**
-   * 
-   * @param {number} floorX The furthest left horizontal point to draw
-   * @param {number} ceilingX The furthest right horizontal point to draw
-   */
-  draw(floorX, ceilingX) {
+  draw() {
+    const frame = frameCount - this.startFrame;
+    const ceiling = animate ? frame * this.speed : windowWidth;
+    const floor = animate ? ceiling - windowWidth : 0;
+    if (floor > windowWidth) return;
     for (const rail of this.rails) {
-      rail.draw(floorX, ceilingX);
+      rail.draw(max(0, floor), min(ceiling, windowWidth));
     }
   }
 }
 
 function newBundle() {
+  const speed = random(5, 15);
   const startI = random(0, windowHeight / gridSizePixels * .9);
   const bundleHeight = random(1, floor(windowHeight / gridSizePixels / 4));
-  const bundle = new RailBundle(startI, bundleHeight);
+  const bundle = new RailBundle(startI, bundleHeight, speed);
   // The number of segments which fit horizontally on the screen
   for (let i = 0; i < ceil(windowWidth / gridSizePixels / segmentSize); ++i) {
     bundle.addSegment(random() < .5 ? Direction.OVER : Direction.DOWN);
@@ -168,13 +170,19 @@ function newBundle() {
 }
 
 let bundles = [];
+let bundleFactoryInterval = null;
 function reset() {
+  backgroundH = random(0, 255);
+  backgroundS = random(0, 255);
+  backgroundV = random(0, 255);
   gridSizePixels = Math.random() * 60 + 15;
   segmentSize = Math.random() * 5 + 1;
   stepSize = gridSizePixels * segmentSize;
   railThickness = gridSizePixels / 10;
-  bundles = [newBundle(), newBundle(), newBundle()];
   frameCount = 0;
+  clearInterval(bundleFactoryInterval);
+  bundles = [];
+  bundleFactoryInterval = setInterval(() => (random(0, 1) < 0.01) && bundles.push(newBundle()))
 }
 
 function setup() {
@@ -196,6 +204,6 @@ function draw() {
   clear();
   background(backgroundH, backgroundS, backgroundB);
   for (const bundle of bundles) {
-    bundle.draw(max(0, floor), min(ceiling, windowWidth));
+    bundle.draw();
   }
 }
