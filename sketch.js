@@ -1,8 +1,3 @@
-let gridSizePixels = Math.random() * 60 + 15;
-let segmentSize = Math.random() * 5 + 1;
-let stepSize = gridSizePixels * segmentSize;
-let railThickness = gridSizePixels / 2; 
-
 let backgroundH = Math.random() * 255;
 let backgroundS = Math.random() * 255;
 let backgroundB = Math.random() * 255;
@@ -19,15 +14,6 @@ const Direction = {
 }
 
 /**
-   * 
-   * @param {number} i Grid coordinate
-   * @returns {number} Pixel coordinate
-   */
- function gridToPixel(i) {
-  return i * gridSizePixels;
-}
-
-/**
  * A constant-thickness line which can travel horizontally or 45 degrees downwards.
  */
 class Rail {
@@ -38,7 +24,7 @@ class Rail {
    * @param {number} b from 0-255
    * @param {number} j The height the rail starts at in grid units.
    */
-  constructor(h, s, b, j) {
+  constructor(h, s, b, j, gridSizePixels, segmentSize) {
     this.h = h;
     this.s = s;
     this.b = b;
@@ -46,7 +32,21 @@ class Rail {
      * @type {Array.<{i: number, j: number}>}
      */
     this.verticesGrid = [{i: 0, j}];
+
+    this.gridSizePixels = gridSizePixels;
+    this.segmentSize = segmentSize;
+    this.stepSize = this.gridSizePixels * this.segmentSize;
+    this.railThickness = gridSizePixels / 10;
   }
+
+  /**
+   * 
+   * @param {number} i Grid coordinate
+   * @returns {number} Pixel coordinate
+   */
+ gridToPixel(i) {
+  return i * this.gridSizePixels;
+}
 
   /**
    * Adds a new point in the rail at the grid point (x, y).  (0,0) is in the top left corner.
@@ -57,8 +57,8 @@ class Rail {
   addSegment(direction) {
     const lastEndpoint = this.verticesGrid[this.verticesGrid.length - 1];
     this.verticesGrid.push({
-      i: lastEndpoint.i + segmentSize, 
-      j: lastEndpoint.j + (direction === Direction.OVER ? 0: segmentSize)});
+      i: lastEndpoint.i + this.segmentSize, 
+      j: lastEndpoint.j + (direction === Direction.OVER ? 0: this.segmentSize)});
   }
 
   /**
@@ -77,29 +77,29 @@ class Rail {
      * @returns {number} Pixel coordinate
      */
     const clampedGridToPixel = (i) => {
-      return max(min(gridToPixel(i), ceilingX), floorX);
+      return max(min(this.gridToPixel(i), ceilingX), floorX);
     }
     
-    const firstVertex = floor(floorX / gridSizePixels / segmentSize);
-    const lastVertex = ceil(ceilingX / gridSizePixels / segmentSize);
+    const firstVertex = floor(floorX / this.gridSizePixels / this.segmentSize);
+    const lastVertex = ceil(ceilingX / this.gridSizePixels / this.segmentSize);
 
     for (let vertex = firstVertex; vertex < lastVertex; ++vertex) {
       const startVertex = this.verticesGrid[vertex];
       const endVertex = this.verticesGrid[vertex + 1];
 
-      const deltaY = gridToPixel(endVertex.j) - gridToPixel(startVertex.j);
+      const deltaY = this.gridToPixel(endVertex.j) - this.gridToPixel(startVertex.j);
 
       const startX =  clampedGridToPixel(startVertex.i);
       // The slope is 1
-      const startY = gridToPixel(startVertex.j) + (startX - gridToPixel(startVertex.i)) * deltaY / stepSize;
+      const startY = this.gridToPixel(startVertex.j) + (startX - this.gridToPixel(startVertex.i)) * deltaY / this.stepSize;
       const endX = clampedGridToPixel(endVertex.i);
-      const endY = gridToPixel(endVertex.j) - (gridToPixel(endVertex.i) - endX) * deltaY / stepSize;
+      const endY = this.gridToPixel(endVertex.j) - (this.gridToPixel(endVertex.i) - endX) * deltaY / this.stepSize;
 
       fill(this.h, this.s, this.b);
       quad(
         startX,                                                 startY,
-        startX - railThickness * tan(PI / 8), startY + railThickness,
-        endX - railThickness * tan(PI / 8),   endY + railThickness,
+        startX - this.railThickness * tan(PI / 8), startY + this.railThickness,
+        endX - this.railThickness * tan(PI / 8),   endY + this.railThickness,
         endX,                                                   endY
       );
     }
@@ -111,7 +111,7 @@ class Rail {
  * its owner can coordinate multiple RailBundles to not intersect
  */
 class RailBundle {
-  constructor(startI, bundleHeight, speed, flipVertical) {
+  constructor(startI, bundleHeight, speed, flipVertical, gridSizePixels, segmentSize) {
     this.flipVertical = flipVertical;
     const numRails = random(5, 15);
     this.speed = speed;
@@ -124,7 +124,10 @@ class RailBundle {
     // The bundle height in grid units from 1 to 1/4 of the screen
     this.bundleHeight = bundleHeight;
     for (let i = 0; i < numRails; ++i) {
-      this.rails.push(new Rail(h, s, v, startI + i/numRails * this.bundleHeight + randomGaussian(0, 0.05)));
+      this.rails.push(new Rail(
+        h, s, v, 
+        startI + i/numRails * this.bundleHeight + randomGaussian(0, 0.05), 
+        gridSizePixels, segmentSize));
     }
   }
 
@@ -157,11 +160,13 @@ class RailBundle {
 }
 
 function newBundle() {
+  const gridSizePixels = Math.random() * 60 + 15;
+  const segmentSize = Math.random() * 5 + 1;
   const speed = random(5, 15);
   const startI = random(0, windowHeight / gridSizePixels * .9);
   const bundleHeight = random(1, floor(windowHeight / gridSizePixels / 4));
   const flipVertical = random(0, 1) < 0.5;
-  const bundle = new RailBundle(startI, bundleHeight, speed, flipVertical);
+  const bundle = new RailBundle(startI, bundleHeight, speed, flipVertical, gridSizePixels, segmentSize);
   // The number of segments which fit horizontally on the screen
   for (let i = 0; i < ceil(windowWidth / gridSizePixels / segmentSize); ++i) {
     bundle.addSegment(random() < .5 ? Direction.OVER : Direction.DOWN);
@@ -176,11 +181,6 @@ function reset() {
   backgroundH = random(0, 255);
   backgroundS = random(0, 255);
   backgroundV = random(0, 255);
-  gridSizePixels = Math.random() * 60 + 15;
-  segmentSize = Math.random() * 5 + 1;
-  stepSize = gridSizePixels * segmentSize;
-  railThickness = gridSizePixels / 10;
-  frameCount = 0;
   clearInterval(bundleFactoryInterval);
   bundles = [];
   if (animate) { bundleFactoryInterval = setInterval(() => (random(0, 1) < 0.1) && bundles.push(newBundle()), 50);}
