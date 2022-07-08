@@ -24,7 +24,7 @@ class Rail {
    * @param {number} b from 0-255
    * @param {number} j The height the rail starts at in grid units.
    */
-  constructor(h, s, b, j, gridSizePixels, segmentSize) {
+  constructor(h, s, b, j, gridSizePixels, segmentSize, railThickness) {
     this.h = h;
     this.s = s;
     this.b = b;
@@ -36,7 +36,7 @@ class Rail {
     this.gridSizePixels = gridSizePixels;
     this.segmentSize = segmentSize;
     this.stepSize = this.gridSizePixels * this.segmentSize;
-    this.railThickness = gridSizePixels / 10;
+    this.railThickness = railThickness;
   }
 
   /**
@@ -111,8 +111,9 @@ class Rail {
  * its owner can coordinate multiple RailBundles to not intersect
  */
 class RailBundle {
-  constructor(startI, bundleHeight, speed, flipVertical, gridSizePixels, segmentSize) {
+  constructor(startI, bundleHeight, speed, flipVertical, flipHorizontal, gridSizePixels, segmentSize, railThickness) {
     this.flipVertical = flipVertical;
+    this.flipHorizontal = flipHorizontal;
     const numRails = random(5, 15);
     this.speed = speed;
     this.startFrame = frameCount;
@@ -127,7 +128,7 @@ class RailBundle {
       this.rails.push(new Rail(
         h, s, v, 
         startI + i/numRails * this.bundleHeight + randomGaussian(0, 0.05), 
-        gridSizePixels, segmentSize));
+        gridSizePixels, segmentSize, railThickness));
     }
     this.done = false;
   }
@@ -156,6 +157,10 @@ class RailBundle {
         translate(0, windowHeight);
         scale(1, -1);
       }
+      if(this.flipHorizontal) {
+        translate(windowWidth, 0);
+        scale(-1, 1);
+      }
       rail.draw(max(0, floor), min(ceiling, windowWidth));
       pop();
     }
@@ -165,11 +170,13 @@ class RailBundle {
 function newBundle() {
   const gridSizePixels = Math.random() * 60 + 15;
   const segmentSize = Math.random() * 5 + 1;
+  const railThickness = gridSizePixels / random(1.5, 15);
   const speed = random(5, 15);
   const startI = random(0, windowHeight / gridSizePixels * .9);
   const bundleHeight = random(1, floor(windowHeight / gridSizePixels / 4));
   const flipVertical = random(0, 1) < 0.5;
-  const bundle = new RailBundle(startI, bundleHeight, speed, flipVertical, gridSizePixels, segmentSize);
+  const flipHorizontal = random(0, 1) < 0.5;
+  const bundle = new RailBundle(startI, bundleHeight, speed, flipVertical, flipHorizontal, gridSizePixels, segmentSize, railThickness);
   // The number of segments which fit horizontally on the screen
   for (let i = 0; i < ceil(windowWidth / gridSizePixels / segmentSize); ++i) {
     bundle.addSegment(random() < .5 ? Direction.OVER : Direction.DOWN);
