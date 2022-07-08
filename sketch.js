@@ -3,6 +3,10 @@ let segmentSize = Math.random() * 5 + 1;
 let stepSize = gridSizePixels * segmentSize;
 let railThickness = gridSizePixels / 2; 
 
+let backgroundH = Math.random() * 255;
+let backgroundS = Math.random() * 255;
+let backgroundB = Math.random() * 255;
+
 /**
  * @readonly
  * @enum {number}
@@ -14,8 +18,8 @@ const Direction = {
 
 /**
    * 
-   * @param {i: number} coords
-   * @returns {x: number}
+   * @param {number} i Grid coordinate
+   * @returns {number} Pixel coordinate
    */
  function gridToPixel(i) {
   return i * gridSizePixels;
@@ -55,21 +59,48 @@ class Rail {
       j: lastEndpoint.j + (direction === Direction.OVER ? 0: segmentSize)});
   }
 
-  draw() {
-    for (let segment = 1; segment < this.verticesGrid.length; ++segment) {
-      const startVertex = this.verticesGrid[segment - 1];
-      const endVertex = this.verticesGrid[segment];
+  /**
+   * 
+   * @param {number} floorX The furthest left horizontal point to draw
+   * @param {number} ceilingX The furthest right horizontal point to draw
+   */
+  draw(floorX, ceilingX) {
+    /**
+     * Returns the corresponding pixel value for `i`, but clamped to the range [startX, endX].
+     * So if `gridToPixel(i)` < startX, you get startX, if `gridToPixel(i)` > endX you get endX, otherwise you get
+     * `gridToPixel(i)`.
+     * @param {number} startX 
+     * @param {number} endX 
+     * @param {number} i
+     * @returns {number} Pixel coordinate
+     */
+    const clampedGridToPixel = (i) => {
+      return max(min(gridToPixel(i), ceilingX), floorX);
+    }
+    
+    const firstVertex = floor(floorX / gridSizePixels / segmentSize);
+    const lastVertex = ceil(ceilingX / gridSizePixels / segmentSize);
 
+    for (let vertex = firstVertex; vertex < lastVertex; ++vertex) {
+      const startVertex = this.verticesGrid[vertex];
+      const endVertex = this.verticesGrid[vertex + 1];
+
+      const deltaY = gridToPixel(endVertex.j) - gridToPixel(startVertex.j);
+
+      const startX =  clampedGridToPixel(startVertex.i);
+      // The slope is 1
+      const startY = gridToPixel(startVertex.j) + (startX - gridToPixel(startVertex.i)) * deltaY / stepSize;
+      const endX = clampedGridToPixel(endVertex.i);
+      const endY = gridToPixel(endVertex.j) - (gridToPixel(endVertex.i) - endX) * deltaY / stepSize;
+      const createJoiner = endX < ceilingX;
       push();
 
       fill(this.h, this.s, this.b);
-      // Move each lower corner over to create a pi/8 rad angle between the corners.  This creates a proper join
-      // so that the thickness of the downward and horizontal rails are the same
       quad(
-        gridToPixel(startVertex.i),                               gridToPixel(startVertex.j),
-        gridToPixel(startVertex.i) - railThickness * tan(PI / 8), gridToPixel(startVertex.j) + railThickness,
-        gridToPixel(endVertex.i) - railThickness * tan(PI / 8),   gridToPixel(endVertex.j) + railThickness,
-        gridToPixel(endVertex.i),                                 gridToPixel(endVertex.j),
+        startX,                                                 startY,
+        startX - railThickness * tan(PI / 8), startY + railThickness,
+        endX - railThickness * tan(PI / 8),   endY + railThickness,
+        endX,                                                   endY
       );
 
       pop();
@@ -107,9 +138,14 @@ class RailBundle {
     }
   }
 
-  draw() {
+  /**
+   * 
+   * @param {number} floorX The furthest left horizontal point to draw
+   * @param {number} ceilingX The furthest right horizontal point to draw
+   */
+  draw(floorX, ceilingX) {
     for (const rail of this.rails) {
-      rail.draw();
+      rail.draw(floorX, ceilingX);
     }
   }
 }
@@ -120,14 +156,13 @@ function reset() {
   segmentSize = Math.random() * 5 + 1;
   stepSize = gridSizePixels * segmentSize;
   railThickness = gridSizePixels / 10;
-  background(random(0, 255), random(0, 255), random(0, 255));
   const bundle = new RailBundle();
   // The number of segments which fit horizontally on the screen
   for (let i = 0; i < ceil(windowWidth / gridSizePixels / segmentSize); ++i) {
     bundle.addSegment(random() < .5 ? Direction.OVER : Direction.DOWN);
   }
   bundles = [bundle];
-
+  frameCount = 0;
 }
 
 function setup() {
@@ -142,7 +177,14 @@ function doSave() {
 }
 
 function draw() {
+  const speed = 10;
+  const ceiling = frameCount * speed;
+  const floor = ceiling - windowWidth;
+  clear();
+  background(backgroundH, backgroundS, backgroundB);
   for (const bundle of bundles) {
-    bundle.draw();
+    // console.log(`(${floor}, ${ceiling})`)
+    // console.log(`(${max(0, floor)}, ${min(ceiling, windowWidth)})`)
+    bundle.draw(max(0, floor), min(ceiling, windowWidth));
   }
 }
