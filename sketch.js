@@ -9,10 +9,6 @@ let backgroundB = Math.random() * 255;
 
 let animate = true;
 
-function toggleAnimate() {
-  animate = !animate;
-}
-
 /**
  * @readonly
  * @enum {number}
@@ -176,6 +172,7 @@ function newBundle() {
 
 let bundles = [];
 let bundleFactoryInterval = null;
+
 function reset() {
   backgroundH = random(0, 255);
   backgroundS = random(0, 255);
@@ -187,7 +184,13 @@ function reset() {
   frameCount = 0;
   clearInterval(bundleFactoryInterval);
   bundles = [];
-  bundleFactoryInterval = setInterval(() => (random(0, 1) < 0.01) && bundles.push(newBundle()))
+  if (animate) { bundleFactoryInterval = setInterval(() => (random(0, 1) < 0.1) && bundles.push(newBundle()), 50);}
+  bundles.push(newBundle());
+}
+
+function toggleAnimate() {
+  animate = !animate;
+  if(!animate) reset();
 }
 
 function setup() {
