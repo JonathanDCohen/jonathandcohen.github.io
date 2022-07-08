@@ -111,8 +111,8 @@ class Rail {
  * its owner can coordinate multiple RailBundles to not intersect
  */
 class RailBundle {
-  constructor(startI, bundleHeight, speed, vertical) {
-    this.vertical = vertical;
+  constructor(startI, bundleHeight, speed, flipVertical) {
+    this.flipVertical = flipVertical;
     const numRails = random(5, 15);
     this.speed = speed;
     this.startFrame = frameCount;
@@ -146,7 +146,7 @@ class RailBundle {
     if (floor > windowWidth) return;
     for (const rail of this.rails) {
       push();
-      if (this.vertical) {
+      if (this.flipVertical) {
         translate(0, windowHeight);
         scale(1, -1);
       }
@@ -161,7 +161,6 @@ function newBundle() {
   const startI = random(0, windowHeight / gridSizePixels * .9);
   const bundleHeight = random(1, floor(windowHeight / gridSizePixels / 4));
   const flipVertical = random(0, 1) < 0.5;
-  const rotation = random(0, TAU);
   const bundle = new RailBundle(startI, bundleHeight, speed, flipVertical);
   // The number of segments which fit horizontally on the screen
   for (let i = 0; i < ceil(windowWidth / gridSizePixels / segmentSize); ++i) {
