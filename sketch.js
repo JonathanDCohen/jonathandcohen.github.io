@@ -98,8 +98,6 @@ class Rail {
       const startY = gridToPixel(startVertex.j) + (startX - gridToPixel(startVertex.i)) * deltaY / stepSize;
       const endX = clampedGridToPixel(endVertex.i);
       const endY = gridToPixel(endVertex.j) - (gridToPixel(endVertex.i) - endX) * deltaY / stepSize;
-      const createJoiner = endX < ceilingX;
-      push();
 
       fill(this.h, this.s, this.b);
       quad(
@@ -108,8 +106,6 @@ class Rail {
         endX - railThickness * tan(PI / 8),   endY + railThickness,
         endX,                                                   endY
       );
-
-      pop();
     }
   }
 }
@@ -119,7 +115,8 @@ class Rail {
  * its owner can coordinate multiple RailBundles to not intersect
  */
 class RailBundle {
-  constructor(startI, bundleHeight, speed) {
+  constructor(startI, bundleHeight, speed, vertical) {
+    this.vertical = vertical;
     const numRails = random(5, 15);
     this.speed = speed;
     this.startFrame = frameCount;
@@ -152,7 +149,13 @@ class RailBundle {
     const floor = animate ? ceiling - windowWidth : 0;
     if (floor > windowWidth) return;
     for (const rail of this.rails) {
+      push();
+      if (this.vertical) {
+        translate(0, windowHeight);
+        scale(1, -1);
+      }
       rail.draw(max(0, floor), min(ceiling, windowWidth));
+      pop();
     }
   }
 }
@@ -161,7 +164,9 @@ function newBundle() {
   const speed = random(5, 15);
   const startI = random(0, windowHeight / gridSizePixels * .9);
   const bundleHeight = random(1, floor(windowHeight / gridSizePixels / 4));
-  const bundle = new RailBundle(startI, bundleHeight, speed);
+  const flipVertical = random(0, 1) < 0.5;
+  const rotation = random(0, TAU);
+  const bundle = new RailBundle(startI, bundleHeight, speed, flipVertical);
   // The number of segments which fit horizontally on the screen
   for (let i = 0; i < ceil(windowWidth / gridSizePixels / segmentSize); ++i) {
     bundle.addSegment(random() < .5 ? Direction.OVER : Direction.DOWN);
