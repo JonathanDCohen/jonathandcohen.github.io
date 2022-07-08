@@ -1,9 +1,3 @@
-let backgroundH = Math.random() * 255;
-let backgroundS = Math.random() * 255;
-let backgroundB = Math.random() * 255;
-
-let animate = true;
-
 /**
  * @readonly
  * @enum {number}
@@ -12,6 +6,8 @@ const Direction = {
   OVER: 0,
   DOWN: 1,
 };
+
+let animate = true;
 
 /**
  * A constant-thickness line which can travel horizontally or 45 degrees downwards.
@@ -254,6 +250,10 @@ function setup() {
 function doSave() {
   save(`${Date.now()}.png`);
 }
+
+let backgroundH = Math.random() * 255;
+let backgroundS = Math.random() * 255;
+let backgroundB = Math.random() * 255;
 
 function draw() {
   const speed = 10;
