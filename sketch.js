@@ -120,7 +120,7 @@ class RailBundle {
     // The distance between the top and bottom rail, in grid units
     const h = random(0,255);
     const s = random(0,255);
-    const v = random(0,255);
+    const v = random(50,255);
     // The bundle height in grid units from 1 to 1/4 of the screen
     this.bundleHeight = bundleHeight;
     for (let i = 0; i < numRails; ++i) {
@@ -129,6 +129,7 @@ class RailBundle {
         startI + i/numRails * this.bundleHeight + randomGaussian(0, 0.05), 
         gridSizePixels, segmentSize));
     }
+    this.done = false;
   }
 
   /**
@@ -146,7 +147,9 @@ class RailBundle {
     const frame = frameCount - this.startFrame;
     const ceiling = animate ? frame * this.speed : windowWidth;
     const floor = animate ? ceiling - windowWidth : 0;
-    if (floor > windowWidth) return;
+    if (floor > windowWidth) {
+      this.done = true;
+    };
     for (const rail of this.rails) {
       push();
       if (this.flipVertical) {
@@ -175,6 +178,7 @@ function newBundle() {
 }
 
 let bundles = [];
+setInterval(() => bundles = bundles.filter(b => !b.done), 5000);
 let bundleFactoryInterval = null;
 
 function reset() {
@@ -209,7 +213,8 @@ function draw() {
   const ceiling = animate ? frameCount * speed : windowWidth;
   const floor = animate ? ceiling - windowWidth : 0;
   clear();
-  background(backgroundH, backgroundS, backgroundB);
+  // background(backgroundH, backgroundS, backgroundB);
+  background(0);
   for (const bundle of bundles) {
     bundle.draw();
   }
