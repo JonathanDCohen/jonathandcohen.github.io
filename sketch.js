@@ -69,30 +69,57 @@ class Rail {
   }
 }
 
-let rs = [];
+/**
+ * A group of rails all traveling the same direction.  It can be queried for bounds at any grid point so that
+ * its owner can coordinate multiple RailBundles to not intersect
+ */
+class RailBundle {
+  constructor() {
+    const numRails = random(5, 15);
+    this.rails = [];
+    // The distance between the top and bottom rail, in grid units
+    const h = random(0,255);
+    const s = random(0,255);
+    const v = random(0,255);
+    // The bundle height in grid units from 1 to 1/4 of the screen
+    this.bundleHeight = random(1, floor(windowHeight / gridSizePixels / 4));
+    for (let i = 0; i < numRails; ++i) {
+      this.rails.push(new Rail(h, s, v, i / numRails * this.bundleHeight + random(-3, 3)));
+    }
+  }
+
+  /**
+   * Adds a new segment to each rail in the bundle.
+   * TODO maybe sometimes we'll skip individual rail segments?
+   * @param {Direction} direction 
+   */
+  addSegment(direction) {
+    for (const rail of this.rails) {
+      rail.addSegment(direction);
+    }
+  }
+
+  draw() {
+    for (const rail of this.rails) {
+      rail.draw();
+    }
+  }
+}
+
+let bundles = [];
 function reset() {
   gridSizePixels = Math.random() * 60 + 15;
   segmentSize = Math.random() * 5 + 1;
   stepSize = gridSizePixels * segmentSize;
-  railThickness = gridSizePixels / 2;
+  railThickness = gridSizePixels / 10;
   background(random(0, 255), random(0, 255), random(0, 255));
-  rs = [];
-  const segments = [];
-  for (let segment = 0; segment < ceil(windowWidth / gridSizePixels / segmentSize); ++segment) {
-    segments.push(random() < .5 ? Direction.OVER : Direction.DOWN);
+  const bundle = new RailBundle();
+  // The number of segments which fit horizontally on the screen
+  for (let i = 0; i < ceil(windowWidth / gridSizePixels / segmentSize); ++i) {
+    bundle.addSegment(random() < .5 ? Direction.OVER : Direction.DOWN);
   }
-  const numRails = random(5, 15);
-  const h = random(0,255);
-  const s = random(0,255);
-  const v = random(0,255);
-  const bundleHeight = random(5, windowHeight / gridSizePixels);
-  for (let i = 0; i < numRails; ++i) {
-    let r = new Rail(h, s, v, i / numRails * bundleHeight - 5);
-    for (segment of segments) {
-      r.addSegment(segment);
-    }
-    rs.push(r);
-  }
+  bundles = [bundle];
+
 }
 
 function setup() {
@@ -107,7 +134,7 @@ function doSave() {
 }
 
 function draw() {
-  for (const rail of rs) {
-    rail.draw();
+  for (const bundle of bundles) {
+    bundle.draw();
   }
 }
