@@ -120,7 +120,7 @@ class RailBundle {
     // The distance between the top and bottom rail, in grid units
     const h = random(0,255);
     const s = random(0,255);
-    const v = random(50,255);
+    const v = random(0,255);
     // The bundle height in grid units from 1 to 1/4 of the screen
     this.bundleHeight = bundleHeight;
     for (let i = 0; i < numRails; ++i) {
@@ -213,8 +213,7 @@ function draw() {
   const ceiling = animate ? frameCount * speed : windowWidth;
   const floor = animate ? ceiling - windowWidth : 0;
   clear();
-  // background(backgroundH, backgroundS, backgroundB);
-  background(0);
+  background(backgroundH, backgroundS, backgroundB);
   for (const bundle of bundles) {
     bundle.draw();
   }
