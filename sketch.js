@@ -238,6 +238,12 @@ function reset() {
 function toggleAnimate() {
   animate = !animate;
   if (!animate) reset();
+  if (animate) {
+    bundleFactoryInterval = setInterval(
+      () => random(0, 1) < 0.1 && bundles.push(newBundle()),
+      50
+    );
+  }
 }
 
 function setup() {
