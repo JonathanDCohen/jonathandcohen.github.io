@@ -119,7 +119,7 @@ class Rail {
  * its owner can coordinate multiple RailBundles to not intersect
  */
 class RailBundle {
-  constructor() {
+  constructor(startI, bundleHeight) {
     const numRails = random(5, 15);
     this.rails = [];
     // The distance between the top and bottom rail, in grid units
@@ -127,9 +127,9 @@ class RailBundle {
     const s = random(0,255);
     const v = random(0,255);
     // The bundle height in grid units from 1 to 1/4 of the screen
-    this.bundleHeight = random(1, floor(windowHeight / gridSizePixels / 4));
+    this.bundleHeight = bundleHeight;
     for (let i = 0; i < numRails; ++i) {
-      this.rails.push(new Rail(h, s, v, i / numRails * this.bundleHeight + randomGaussian(0, .05)));
+      this.rails.push(new Rail(h, s, v, startI + i/numRails * this.bundleHeight + randomGaussian(0, 0.05)));
     }
   }
 
@@ -156,18 +156,24 @@ class RailBundle {
   }
 }
 
+function newBundle() {
+  const startI = random(0, windowHeight / gridSizePixels * .9);
+  const bundleHeight = random(1, floor(windowHeight / gridSizePixels / 4));
+  const bundle = new RailBundle(startI, bundleHeight);
+  // The number of segments which fit horizontally on the screen
+  for (let i = 0; i < ceil(windowWidth / gridSizePixels / segmentSize); ++i) {
+    bundle.addSegment(random() < .5 ? Direction.OVER : Direction.DOWN);
+  }
+  return bundle;
+}
+
 let bundles = [];
 function reset() {
   gridSizePixels = Math.random() * 60 + 15;
   segmentSize = Math.random() * 5 + 1;
   stepSize = gridSizePixels * segmentSize;
   railThickness = gridSizePixels / 10;
-  const bundle = new RailBundle();
-  // The number of segments which fit horizontally on the screen
-  for (let i = 0; i < ceil(windowWidth / gridSizePixels / segmentSize); ++i) {
-    bundle.addSegment(random() < .5 ? Direction.OVER : Direction.DOWN);
-  }
-  bundles = [bundle];
+  bundles = [newBundle(), newBundle(), newBundle()];
   frameCount = 0;
 }
 
