@@ -193,6 +193,7 @@ class RailBundle {
   }
 }
 
+// This is weird and overkill *shrug*
 function newBundle() {
   const gridSizePixels = Math.random() * 60 + 15;
   const segmentSize = Math.random() * 5 + 1;
