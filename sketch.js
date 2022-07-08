@@ -7,6 +7,12 @@ let backgroundH = Math.random() * 255;
 let backgroundS = Math.random() * 255;
 let backgroundB = Math.random() * 255;
 
+let animate = true;
+
+function toggleAnimate() {
+  animate = !animate;
+}
+
 /**
  * @readonly
  * @enum {number}
@@ -176,15 +182,14 @@ function doSave() {
   save(`${Date.now()}.png`);
 }
 
+
 function draw() {
   const speed = 10;
-  const ceiling = frameCount * speed;
-  const floor = ceiling - windowWidth;
+  const ceiling = animate ? frameCount * speed : windowWidth;
+  const floor = animate ? ceiling - windowWidth : 0;
   clear();
   background(backgroundH, backgroundS, backgroundB);
   for (const bundle of bundles) {
-    // console.log(`(${floor}, ${ceiling})`)
-    // console.log(`(${max(0, floor)}, ${min(ceiling, windowWidth)})`)
     bundle.draw(max(0, floor), min(ceiling, windowWidth));
   }
 }

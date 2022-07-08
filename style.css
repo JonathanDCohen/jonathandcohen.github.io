@@ -20,3 +20,11 @@ canvas {
   top: 70px;
   z-index: 9999;
 }
+
+#animateToggle {
+  position: absolute;
+  right: 50px;
+  top: 90px;
+  background-color: white;
+  z-index: 9999;
+}
