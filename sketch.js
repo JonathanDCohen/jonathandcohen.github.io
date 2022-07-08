@@ -13,6 +13,15 @@ const Direction = {
 }
 
 /**
+   * 
+   * @param {i: number} coords
+   * @returns {x: number}
+   */
+ function gridToPixel(i) {
+  return i * gridSizePixels;
+}
+
+/**
  * A constant-thickness line which can travel horizontally or 45 degrees downwards.
  */
 class Rail {
@@ -21,14 +30,16 @@ class Rail {
    * @param {number} h from 0-255
    * @param {number} s from 0-255
    * @param {number} b from 0-255
-   * @param {number} y The height the rail starts at in grid units.
+   * @param {number} j The height the rail starts at in grid units.
    */
-  constructor(h, s, b, y) {
+  constructor(h, s, b, j) {
     this.h = h;
     this.s = s;
     this.b = b;
-    this.startY = y;
-    this.segments = [];
+    /**
+     * @type {Array.<{i: number, j: number}>}
+     */
+    this.verticesGrid = [{i: 0, j}];
   }
 
   /**
@@ -38,32 +49,29 @@ class Rail {
    * The length of the segment is `segmentSize` units, or `segmentSize * gridSizePixels` px.
    */
   addSegment(direction) {
-    this.segments.push(direction);
+    const lastEndpoint = this.verticesGrid[this.verticesGrid.length - 1];
+    this.verticesGrid.push({
+      i: lastEndpoint.i + segmentSize, 
+      j: lastEndpoint.j + (direction === Direction.OVER ? 0: segmentSize)});
   }
 
   draw() {
-    let downCount = 0;
-    for (let i = 0; i < this.segments.length; ++i) {
-      push();
-      fill(this.h, this.s, this.b);
+    for (let segment = 1; segment < this.verticesGrid.length; ++segment) {
+      const startVertex = this.verticesGrid[segment - 1];
+      const endVertex = this.verticesGrid[segment];
 
-      translate(stepSize * i, stepSize * downCount + this.startY * gridSizePixels);
-      if (this.segments[i] === Direction.DOWN) {
-        ++downCount;
-        rotate(PI / 4);
-        // Just doing stepSize * sqrt(2) makes the top right corner of the slanted edge
-        // meet the top left corner of the next OVER segment, leaving a kite-shaped hole.
-        // joinerSize is the length of the smaller of the sides on the kite.  We extend
-        // the slanting edge and insert a small rectangle to fill the gap in.
-        const joinerSize = railThickness * tan(PI / 8);
-        rect(0, 0, stepSize * sqrt(2) + joinerSize, railThickness);
-        // Move the origin to where the gap is
-        rotate(-PI/4);
-        translate(stepSize - joinerSize, stepSize);
-        rect(0, 0, joinerSize, railThickness);
-      } else {
-        rect(0, 0, stepSize, railThickness);
-      }
+      push();
+
+      fill(this.h, this.s, this.b);
+      // Move each lower corner over to create a pi/8 rad angle between the corners.  This creates a proper join
+      // so that the thickness of the downward and horizontal rails are the same
+      quad(
+        gridToPixel(startVertex.i),                               gridToPixel(startVertex.j),
+        gridToPixel(startVertex.i) - railThickness * tan(PI / 8), gridToPixel(startVertex.j) + railThickness,
+        gridToPixel(endVertex.i) - railThickness * tan(PI / 8),   gridToPixel(endVertex.j) + railThickness,
+        gridToPixel(endVertex.i),                                 gridToPixel(endVertex.j),
+      );
+
       pop();
     }
   }
@@ -84,7 +92,7 @@ class RailBundle {
     // The bundle height in grid units from 1 to 1/4 of the screen
     this.bundleHeight = random(1, floor(windowHeight / gridSizePixels / 4));
     for (let i = 0; i < numRails; ++i) {
-      this.rails.push(new Rail(h, s, v, i / numRails * this.bundleHeight + random(-3, 3)));
+      this.rails.push(new Rail(h, s, v, i / numRails * this.bundleHeight + randomGaussian(0, .05)));
     }
   }
 
